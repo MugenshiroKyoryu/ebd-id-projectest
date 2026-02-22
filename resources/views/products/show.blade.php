@@ -6,19 +6,14 @@
     </x-slot>
 
     @php
-        // เตรียม gallery_images ให้ปลอดภัย
-        $gallery = $product->gallery_images;
-        if (is_string($gallery)) {
-            $gallery = json_decode($gallery, true);
+        // images อาจเป็น array (จาก casts) หรือ string json (กรณีข้อมูลเก่า) -> ทำให้ปลอดภัย
+        $images = $product->images;
+        if (is_string($images)) {
+            $images = json_decode($images, true);
         }
-        $gallery = is_array($gallery) ? $gallery : [];
+        $images = is_array($images) ? $images : [];
 
-        // เตรียม attributes ให้ปลอดภัย
-        $attrs = $product->attributes;
-        if (is_string($attrs)) {
-            $attrs = json_decode($attrs, true);
-        }
-        $attrs = is_array($attrs) ? $attrs : [];
+        $imageCount = count($images);
     @endphp
 
     <div class="py-12">
@@ -30,6 +25,8 @@
                        class="bg-gray-500 hover:bg-gray-500/80 text-white text-xs font-bold p-3 rounded">
                         กลับ
                     </a>
+
+                    
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -37,102 +34,138 @@
                     {{-- ข้อมูลพื้นฐาน --}}
                     <div>
                         <h3 class="font-bold mb-2">ข้อมูลพื้นฐาน</h3>
-                        <p><strong>รหัสสินค้า:</strong> {{ $product->id }}</p>
-                        <p><strong>รหัสสินค้า (SKU):</strong> {{ $product->sku }}</p>
-                        <p><strong>บาร์โค้ด:</strong> {{ $product->barcode }}</p>
+                        <p><strong>ID:</strong> {{ $product->id }}</p>
+                        <p><strong>SKU:</strong> <span class="font-mono">{{ $product->sku }}</span></p>
                         <p><strong>ชื่อสินค้า:</strong> {{ $product->name }}</p>
-                        <p><strong>ลิงก์ (Slug):</strong> {{ $product->slug }}</p>
-                        <p><strong>หมวดหมู่:</strong> {{ $product->category_name }}</p>
-                        <p><strong>แบรนด์:</strong> {{ $product->brand_name }}</p>
+                        <p><strong>หมวดหมู่:</strong> {{ $product->category ?? '-' }}</p>
+                        <p><strong>แบรนด์:</strong> {{ $product->brand ?? '-' }}</p>
+
+                        <p class="mt-2">
+                            <strong>Tags:</strong>
+                            @php
+                                $tags = $product->tags;
+                                if (is_string($tags)) $tags = json_decode($tags, true);
+                                $tags = is_array($tags) ? $tags : [];
+                            @endphp
+
+                            @if(count($tags))
+                                <span class="text-sm">
+                                    {{ implode(', ', $tags) }}
+                                </span>
+                            @else
+                                -
+                            @endif
+                        </p>
                     </div>
 
-                    {{-- ราคา --}}
+                    {{-- ราคา / สต๊อก / สถานะ --}}
                     <div>
-                        <h3 class="font-bold mb-2">ข้อมูลราคา</h3>
-                        <p><strong>ราคาขาย:</strong> {{ number_format($product->price, 2) }} บาท</p>
-                        <p><strong>ราคาก่อนลด:</strong> {{ number_format($product->compare_at_price, 2) }} บาท</p>
-                        <p><strong>ต้นทุน:</strong> {{ number_format($product->cost, 2) }} บาท</p>
-                        <p><strong>อัตราภาษี:</strong> {{ $product->tax_rate }} %</p>
-                        <p><strong>ส่วนลด:</strong> {{ $product->discount_type }} ({{ $product->discount_value }})</p>
-                    </div>
+                        <h3 class="font-bold mb-2">ราคา / สต๊อก / สถานะ</h3>
+                        <p><strong>ราคาขาย:</strong> {{ number_format((float)($product->price ?? 0), 2) }} บาท</p>
 
-                    {{-- สต๊อก --}}
-                    <div>
-                        <h3 class="font-bold mb-2">ข้อมูลสต๊อก</h3>
-                        <p><strong>จำนวนในคลัง:</strong> {{ $product->stock_qty }}</p>
-                        <p><strong>จำนวนที่จองแล้ว:</strong> {{ $product->reserved_qty }}</p>
-                        <p><strong>จุดสั่งซื้อใหม่:</strong> {{ $product->reorder_point }}</p>
-                        <p><strong>สถานะสต๊อก:</strong> {{ $product->stock_status_text ?? $product->stock_status }}</p>
-                    </div>
+                        <p>
+                            <strong>ราคาเทียบ:</strong>
+                            {{ $product->compare_price !== null ? number_format((float)$product->compare_price, 2).' บาท' : '-' }}
+                        </p>
 
-                    {{-- ขนาด --}}
-                    <div>
-                        <h3 class="font-bold mb-2">ขนาดและน้ำหนัก</h3>
-                        <p><strong>น้ำหนัก:</strong> {{ $product->weight_kg }} กิโลกรัม</p>
-                        <p><strong>ความยาว:</strong> {{ $product->length_cm }} ซม.</p>
-                        <p><strong>ความกว้าง:</strong> {{ $product->width_cm }} ซม.</p>
-                        <p><strong>ความสูง:</strong> {{ $product->height_cm }} ซม.</p>
-                        <p><strong>ประเภทการจัดส่ง:</strong> {{ $product->shipping_class }}</p>
+                        <p>
+                            <strong>ต้นทุน:</strong>
+                            {{ $product->cost !== null ? number_format((float)$product->cost, 2).' บาท' : '-' }}
+                        </p>
+
+                        <p><strong>สต๊อก:</strong> {{ (int)($product->stock_qty ?? 0) }}</p>
+
+                        <p>
+                            <strong>สถานะสินค้า:</strong>
+                            {{ $product->status ?? '-' }}
+                        </p>
+
+                        <p>
+                            <strong>สินค้าแนะนำ:</strong>
+                            {{ $product->is_featured ? 'ใช่' : 'ไม่ใช่' }}
+                        </p>
+
+                        <p>
+                            <strong>วันที่เผยแพร่:</strong>
+                            {{ $product->published_at?->format('d/m/Y H:i') ?? '-' }}
+                        </p>
                     </div>
 
                 </div>
 
-                {{-- คำอธิบาย --}}
+                {{-- Summary / Description --}}
                 <div class="mt-6">
                     <h3 class="font-bold mb-2">คำอธิบายสินค้า</h3>
-                    <p><strong>คำอธิบายสั้น:</strong> {{ $product->short_description }}</p>
-                    <p class="mt-2"><strong>รายละเอียดเพิ่มเติม:</strong></p>
-                    <div class="bg-gray-100 p-3 rounded">
-                        {{ $product->description }}
+
+                    <p>
+                        <strong>สรุป:</strong>
+                        {{ $product->summary ?? '-' }}
+                    </p>
+
+                    <p class="mt-2"><strong>รายละเอียด:</strong></p>
+                    <div class="bg-gray-100 p-3 rounded whitespace-pre-line">
+                        {{ $product->description ?? '-' }}
                     </div>
                 </div>
 
-                {{-- รูปภาพ --}}
+                {{-- รูปภาพ (แสดงอย่างอื่นแทนรูป: นับจำนวน + ลิงก์) --}}
                 <div class="mt-6">
                     <h3 class="font-bold mb-2">รูปภาพสินค้า</h3>
 
-                    @if($product->cover_image_url)
-                        <div class="mb-3">
-                            <strong>รูปปก:</strong><br>
-                            <img src="{{ $product->cover_image_url }}"
-                                 class="w-40 rounded border mt-2">
-                        </div>
-                    @endif
+                    <div class="space-y-2">
+                        <p>
+                            <strong>รูปปก (Cover):</strong>
+                            @if($product->cover_image)
+                                <a href="{{ $product->cover_image }}" target="_blank" class="text-blue-600 underline">
+                                    เปิดดู
+                                </a>
+                                <span class="text-xs text-gray-500 ml-2">{{ $product->cover_image }}</span>
+                            @else
+                                -
+                            @endif
+                        </p>
 
-                    @if(!empty($gallery))
-                        <div>
-                            <strong>รูปภาพเพิ่มเติม:</strong>
-                            <div class="flex gap-3 mt-2 flex-wrap">
-                                @foreach($gallery as $img)
-                                    <img src="{{ $img }}" class="w-24 rounded border">
-                                @endforeach
+                        <p>
+                            <strong>รูปเพิ่มเติม:</strong>
+                            @if($imageCount > 0)
+                                <span class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+                                    {{ $imageCount }} รูป
+                                </span>
+                            @else
+                                <span class="inline-block bg-gray-100 text-gray-600 text-xs font-semibold px-2 py-1 rounded">
+                                    ไม่มีรูป
+                                </span>
+                            @endif
+                        </p>
+
+                        @if($imageCount > 0)
+                            <div class="mt-2">
+                                <ul class="list-disc pl-5 text-sm space-y-1">
+                                    @foreach($images as $i => $url)
+                                        <li>
+                                            <a href="{{ $url }}" target="_blank" class="text-blue-600 underline">
+                                                รูปที่ {{ $i + 1 }}
+                                            </a>
+                                            <span class="text-xs text-gray-500 ml-2">{{ $url }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
                             </div>
-                        </div>
-                    @endif
-                </div>
-
-                {{-- SEO --}}
-                <div class="mt-6">
-                    <h3 class="font-bold mb-2">ข้อมูล SEO</h3>
-                    <p><strong>Meta Title:</strong> {{ $product->meta_title }}</p>
-                    <p><strong>Meta Description:</strong> {{ $product->meta_description }}</p>
-                    <p><strong>Meta Keywords:</strong> {{ $product->meta_keywords }}</p>
+                        @endif
+                    </div>
                 </div>
 
                 {{-- อื่น ๆ --}}
                 <div class="mt-6">
                     <h3 class="font-bold mb-2">ข้อมูลเพิ่มเติม</h3>
-                    <p><strong>สินค้าแนะนำ:</strong> {{ $product->is_featured ? 'ใช่' : 'ไม่ใช่' }}</p>
-                    <p><strong>สถานะสินค้า:</strong> {{ $product->status }}</p>
-                    <p><strong>วันที่เผยแพร่:</strong> {{ $product->published_at }}</p>
-                    <p><strong>หมายเหตุ:</strong> {{ $product->notes }}</p>
+                    <p><strong>หมายเหตุ:</strong> {{ $product->notes ?? '-' }}</p>
+                </div>
 
-                    @if(!empty($attrs))
-                        <div class="mt-3">
-                            <strong>คุณสมบัติสินค้า:</strong>
-                            <pre class="bg-gray-100 p-3 rounded text-sm">{{ json_encode($attrs, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
-                        </div>
-                    @endif
+                {{-- เวลาในระบบ --}}
+                <div class="mt-6">
+                    <h3 class="font-bold mb-2">เวลาในระบบ</h3>
+                    <p><strong>Created At:</strong> {{ $product->created_at?->format('d/m/Y H:i') ?? '-' }}</p>
+                    <p><strong>Updated At:</strong> {{ $product->updated_at?->format('d/m/Y H:i') ?? '-' }}</p>
                 </div>
 
             </div>

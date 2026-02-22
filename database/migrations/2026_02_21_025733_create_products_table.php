@@ -9,66 +9,47 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
-            $table->id(); // BIGINT UNSIGNED AUTO_INCREMENT
+            $table->id(); // Primary Key
 
-            // ตัวตนสินค้า
-            $table->string('sku', 64)->unique();
-            $table->string('barcode', 64)->nullable();
-            $table->string('name', 255);
-            $table->string('slug', 255)->unique();
-            $table->string('short_description', 500)->nullable();
-            $table->longText('description')->nullable();
+            // ข้อมูลหลักสินค้า
+            $table->string('sku', 64)->unique();       // 1
+            $table->string('name', 255)->index();      // 2
 
-            // จัดกลุ่ม (แบบตารางเดียว)
-            $table->string('category_name', 120)->nullable()->index();
-            $table->string('brand_name', 120)->nullable()->index();
-            $table->json('tags')->nullable();
+            // การจัดกลุ่ม
+            $table->string('category', 120)->nullable()->index(); // 3
+            $table->string('brand', 120)->nullable()->index();    // 4
+            $table->json('tags')->nullable();                     // 5
 
-            // ราคา/ภาษี/ส่วนลด
-            $table->decimal('price', 12, 2)->default(0);
-            $table->decimal('compare_at_price', 12, 2)->nullable();
-            $table->decimal('cost', 12, 2)->nullable();
-            $table->decimal('tax_rate', 5, 2)->nullable();
-            $table->enum('discount_type', ['none', 'percent', 'fixed'])->default('none');
-            $table->decimal('discount_value', 12, 2)->nullable();
+            // เนื้อหา
+            $table->string('summary', 500)->nullable();   // 6
+            $table->longText('description')->nullable();  // 7
 
-            // สต๊อก/คลัง
-            $table->integer('stock_qty')->default(0);
-            $table->integer('reserved_qty')->default(0);
-            $table->integer('reorder_point')->nullable();
-            $table->enum('stock_status', ['in_stock', 'out_of_stock', 'preorder'])->default('in_stock');
+            // ราคา
+            $table->decimal('price', 12, 2)->default(0);        // 8
+            $table->decimal('compare_price', 12, 2)->nullable(); // 9
+            $table->decimal('cost', 12, 2)->nullable();          // 10
 
-            // ขนส่ง/มิติ
-            $table->decimal('weight_kg', 10, 3)->nullable();
-            $table->decimal('length_cm', 10, 2)->nullable();
-            $table->decimal('width_cm', 10, 2)->nullable();
-            $table->decimal('height_cm', 10, 2)->nullable();
-            $table->string('shipping_class', 80)->nullable();
+            // สต๊อก
+            $table->integer('stock_qty')->default(0); // 11
 
-            // รูป/สื่อ
-            $table->string('cover_image_url', 500)->nullable();
-            $table->json('gallery_images')->nullable();
+            // รูปภาพ
+            $table->string('cover_image', 500)->nullable(); // 12
+            $table->json('images')->nullable();              // 13
 
-            // สถานะการขาย
-            $table->enum('status', ['draft', 'active', 'archived'])->default('draft')->index();
-            $table->boolean('is_featured')->default(false);
-            $table->dateTime('published_at')->nullable();
+            // สถานะ
+            $table->enum('status', ['draft', 'active', 'archived'])
+                  ->default('draft')
+                  ->index();                                 // 14
 
-            // SEO
-            $table->string('meta_title', 255)->nullable();
-            $table->string('meta_description', 500)->nullable();
-            $table->string('meta_keywords', 500)->nullable();
+            $table->boolean('is_featured')->default(false);   // 15
+            $table->dateTime('published_at')->nullable();     // 16
 
             // อื่น ๆ
-            $table->string('notes', 500)->nullable();
-            $table->json('attributes')->nullable();
+            $table->string('notes', 500)->nullable();  // 17
 
-            // timestamps + soft deletes
-            $table->timestamps();     // created_at, updated_at
-            $table->softDeletes();    // deleted_at
-
-            // เพิ่ม index ที่ต้องการ (บางอันใส่ไว้แล้วด้วย ->index() ด้านบน)
-            $table->index('name');
+            // เวลาระบบ
+            $table->timestamps();
+           
         });
     }
 

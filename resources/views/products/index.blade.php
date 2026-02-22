@@ -70,118 +70,142 @@
   <div class="card bg-base-100 shadow">
     <div class="card-body p-0">
 
-      <div class="overflow-x-auto">
-        <table class="table table-zebra table-xs">
-          <thead>
-            <tr>
-              <th>รหัส</th>
-              <th>รหัสสินค้า (SKU)</th>
-              <th>ชื่อสินค้า</th>
-              <th>Slug</th>
-              <th>หมวดหมู่</th>
-              <th>แบรนด์</th>
-              <th class="text-right">ราคาขาย</th>
-              <th class="text-right">ราคาก่อนลด</th>
-              <th>ประเภทส่วนลด</th>
-              <th class="text-right">มูลค่าส่วนลด</th>
-              <th class="text-center">จำนวนในสต๊อก</th>
-              <th class="text-center">จองแล้ว</th>
-              <th class="text-center">พร้อมขาย</th>
-              <th>สถานะสินค้า</th>
-              <th>สถานะสต๊อก</th>
-              <th>สินค้าแนะนำ</th>
-              <th>วันที่เผยแพร่</th>
-              <th>จัดการ</th>
-            </tr>
-          </thead>
+     <div class="overflow-x-auto">
+  <table class="table table-zebra table-xs">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>จำนวนรูป</th>
+        <th>SKU</th>
+        <th>ชื่อสินค้า</th>
+        <th>หมวดหมู่</th>
+        <th>แบรนด์</th>
+        <th class="text-right">ราคาขาย</th>
+        <th class="text-right">ราคาเทียบ</th>
+        <th class="text-right">ต้นทุน</th>
+        <th class="text-center">สต๊อก</th>
+        <th>สถานะ</th>
+        <th>สินค้าแนะนำ</th>
+        <th>วันที่สร้าง</th>
+        <th>แก้ไขล่าสุด</th>
+        <th>หมายเหตุ</th>
+        
+        <th>จัดการ</th>
+      </tr>
+    </thead>
 
-          <tbody>
-            @forelse($products as $item)
-              <tr>
-                <td>{{ $item->id }}</td>
-                <td class="font-mono">{{ $item->sku }}</td>
-                <td class="font-semibold">{{ $item->name }}</td>
-                <td class="text-xs opacity-70">{{ $item->slug }}</td>
-                <td>{{ $item->category_name }}</td>
-                <td>{{ $item->brand_name }}</td>
+    <tbody>
+      @forelse($products as $item)
+        <tr>
+          <td>{{ $item->id }}</td>
 
-                <td class="text-right">
-                  {{ number_format((float)$item->price, 2) }}
-                </td>
+          <td class="text-center">
+  @php
+  $raw = $item->images ?? null;
 
-                <td class="text-right">
-                  {{ number_format((float)$item->compare_at_price, 2) }}
-                </td>
+  if (is_array($raw)) {
+    $arr = $raw;
+  } elseif (is_string($raw) && $raw !== '') {
+    $decoded = json_decode($raw, true);
+    $arr = is_array($decoded) ? $decoded : array_map('trim', explode(',', $raw));
+  } else {
+    $arr = [];
+  }
 
-                <td>{{ $item->discount_type }}</td>
+  $arr = array_values(array_filter($arr, fn($v) => $v !== ''));
+  $imageCount = count($arr);
+@endphp
 
-                <td class="text-right">
-                  {{ number_format((float)$item->discount_value, 2) }}
-                </td>
+@if($imageCount > 0)
+  <span class="badge badge-info badge-xs">{{ $imageCount }} รูป</span>
+@else
+  <span class="badge badge-ghost badge-xs">ไม่มีรูป</span>
+@endif
+</td>
 
-                <td class="text-center">{{ $item->stock_qty }}</td>
-                <td class="text-center">{{ $item->reserved_qty }}</td>
-                <td class="text-center font-bold">
-                  {{ $item->available_qty }}
-                </td>
+          <td class="font-mono">{{ $item->sku }}</td>
+          <td class="font-semibold">{{ $item->name }}</td>
+          <td>{{ $item->category ?? '-' }}</td>
+          <td>{{ $item->brand ?? '-' }}</td>
 
-                <td>
-                  @if($item->status === 'active')
-                    <span class="badge badge-success badge-xs">active</span>
-                  @elseif($item->status === 'draft')
-                    <span class="badge badge-warning badge-xs">draft</span>
-                  @else
-                    <span class="badge badge-ghost badge-xs">archived</span>
-                  @endif
-                </td>
+          <td class="text-right">
+            {{ number_format((float)($item->price ?? 0), 2) }}
+          </td>
 
-                <td>
-                  <span class="badge badge-outline badge-xs">
-                    {{ $item->stock_status }}
-                  </span>
-                </td>
+          <td class="text-right">
+            {{ $item->compare_price
+                ? number_format((float)$item->compare_price, 2)
+                : '-' }}
+          </td>
 
-                <td>
-                  @if($item->is_featured)
-                    <span class="badge badge-primary badge-xs">yes</span>
-                  @else
-                    <span class="badge badge-ghost badge-xs">no</span>
-                  @endif
-                </td>
+          <td class="text-right">
+            {{ number_format((float)($item->cost ?? 0), 2) }}
+          </td>
 
-                <td class="text-xs">
-                  {{ $item->published_at?->format('d/m/Y') }}
-                </td>
+          <td class="text-center">
+            {{ (int)($item->stock_qty ?? 0) }}
+          </td>
 
-                <td>
-                  <div class="flex gap-1">
-                    <a href="{{ route('products.show', $item->id) }}"
-                       class="btn btn-warning btn-xs">Detail</a>
+          <td>
+            @if($item->status === 'active')
+              <span class="badge badge-success badge-xs">active</span>
+            @elseif($item->status === 'draft')
+              <span class="badge badge-warning badge-xs">draft</span>
+            @else
+              <span class="badge badge-ghost badge-xs">archived</span>
+            @endif
+          </td>
 
-                    <a href="{{ route('products.edit', $item->id) }}"
-                       class="btn btn-info btn-xs">Edit</a>
+          <td>
+            @if($item->is_featured)
+              <span class="badge badge-primary badge-xs">yes</span>
+            @else
+              <span class="badge badge-ghost badge-xs">no</span>
+            @endif
+          </td>
+          <td class="text-xs">
+            {{ $item->created_at?->format('d/m/Y') ?? '-' }}
+          </td>
 
-                    <form action="{{ route('products.destroy', $item->id) }}"
-                          method="POST"
-                          onsubmit="return confirm('ยืนยันการลบ?');">
-                      @csrf
-                      @method('DELETE')
-                      <button class="btn btn-error btn-xs">Delete</button>
-                    </form>
-                  </div>
-                </td>
+          <td class="text-xs">
+  {{ $item->updated_at?->format('d/m/Y H:i') ?? '-' }}
+</td>
 
-              </tr>
-            @empty
-              <tr>
-                <td colspan="18" class="text-center py-6">
-                  ยังไม่มีสินค้าในระบบ
-                </td>
-              </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+          <td class="text-xs">
+            {{ $item->notes ?? '-' }}
+          </td>
+
+          
+
+          <td>
+            <div class="flex gap-1">
+              <a href="{{ route('products.show', $item->id) }}"
+                 class="btn btn-warning btn-xs">Detail</a>
+
+              <a href="{{ route('products.edit', $item->id) }}"
+                 class="btn btn-info btn-xs">Edit</a>
+
+              <form action="{{ route('products.destroy', $item->id) }}"
+                    method="POST"
+                    onsubmit="return confirm('ยืนยันการลบ?');">
+                @csrf
+                @method('DELETE')
+                <button class="btn btn-error btn-xs">Delete</button>
+              </form>
+            </div>
+          </td>
+
+        </tr>
+      @empty
+        <tr>
+          <td colspan="16" class="text-center py-6">
+            ยังไม่มีสินค้าในระบบ
+          </td>
+        </tr>
+      @endforelse
+    </tbody>
+  </table>
+</div>
 
       <div class="p-4">
         {{ $products->links() }}

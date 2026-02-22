@@ -36,16 +36,13 @@
                 @endif
 
                 @php
+                    // tags: array -> csv
                     $tagsCsv = old('tags', is_array($product->tags) ? implode(',', $product->tags) : ($product->tags ?? ''));
-                    $galleryCsv = old('gallery_images', is_array($product->gallery_images) ? implode(',', $product->gallery_images) : ($product->gallery_images ?? ''));
-                    $attrsJson = old(
-                        'attributes',
-                        is_array($product->attributes) ? json_encode($product->attributes, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT) : ($product->attributes ?? '')
-                    );
+
+                    // images: array -> csv
+                    $imagesCsv = old('images', is_array($product->images) ? implode(',', $product->images) : ($product->images ?? ''));
 
                     $publishedValue = old('published_at', optional($product->published_at)->format('Y-m-d\TH:i'));
-                    $discountType = old('discount_type', $product->discount_type ?? 'none');
-                    $stockStatus = old('stock_status', $product->stock_status ?? 'in_stock');
                     $status = old('status', $product->status ?? 'draft');
                 @endphp
 
@@ -72,16 +69,6 @@
                         </div>
                     </div>
 
-                    {{-- barcode --}}
-                    <div class="flex flex-row items-center gap-4">
-                        <div class="basis-1/5"><strong>Barcode :</strong></div>
-                        <div class="basis-4/5">
-                            <input class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="barcode" type="text" value="{{ old('barcode', $product->barcode) }}">
-                            @error('barcode') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
-
                     {{-- name --}}
                     <div class="flex flex-row items-center gap-4">
                         <div class="basis-1/5"><strong>ชื่อสินค้า :</strong></div>
@@ -92,54 +79,23 @@
                         </div>
                     </div>
 
-                    {{-- slug (ถ้าต้องการแก้ได้ ให้เอา readonly ออก) --}}
-                    <div class="flex flex-row items-center gap-4">
-                        <div class="basis-1/5"><strong>Slug :</strong></div>
-                        <div class="basis-4/5">
-                            <input class="w-full py-2 px-3 text-gray-700 bg-gray-100 border border-gray-200 rounded"
-                                   name="slug" type="text" value="{{ old('slug', $product->slug) }}" readonly>
-                            @error('slug') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                            <div class="mt-1 text-xs text-gray-500">* ปกติระบบสร้างจากชื่อสินค้า (แนะนำให้อ่านอย่างเดียว)</div>
-                        </div>
-                    </div>
-
-                    {{-- short_description --}}
-                    <div class="flex flex-row items-start gap-4">
-                        <div class="basis-1/5 pt-2"><strong>คำอธิบายสั้น :</strong></div>
-                        <div class="basis-4/5">
-                            <textarea class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                      name="short_description" rows="2">{{ old('short_description', $product->short_description) }}</textarea>
-                            @error('short_description') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
-
-                    {{-- description --}}
-                    <div class="flex flex-row items-start gap-4">
-                        <div class="basis-1/5 pt-2"><strong>รายละเอียด :</strong></div>
-                        <div class="basis-4/5">
-                            <textarea class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                      name="description" rows="5">{{ old('description', $product->description) }}</textarea>
-                            @error('description') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
-
-                    {{-- category_name --}}
+                    {{-- category --}}
                     <div class="flex flex-row items-center gap-4">
                         <div class="basis-1/5"><strong>หมวดหมู่ :</strong></div>
                         <div class="basis-4/5">
                             <input class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="category_name" type="text" value="{{ old('category_name', $product->category_name) }}">
-                            @error('category_name') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
+                                   name="category" type="text" value="{{ old('category', $product->category) }}">
+                            @error('category') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
                         </div>
                     </div>
 
-                    {{-- brand_name --}}
+                    {{-- brand --}}
                     <div class="flex flex-row items-center gap-4">
                         <div class="basis-1/5"><strong>แบรนด์ :</strong></div>
                         <div class="basis-4/5">
                             <input class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="brand_name" type="text" value="{{ old('brand_name', $product->brand_name) }}">
-                            @error('brand_name') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
+                                   name="brand" type="text" value="{{ old('brand', $product->brand) }}">
+                            @error('brand') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
                         </div>
                     </div>
 
@@ -153,12 +109,32 @@
                         </div>
                     </div>
 
-                    {{-- ราคา/ภาษี/ส่วนลด --}}
-                    <div class="pt-2 border-t">
-                        <h3 class="font-bold text-gray-800 mt-4">ราคา / ภาษี / ส่วนลด</h3>
+                    {{-- summary --}}
+                    <div class="flex flex-row items-start gap-4">
+                        <div class="basis-1/5 pt-2"><strong>คำอธิบายสั้น :</strong></div>
+                        <div class="basis-4/5">
+                            <textarea class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
+                                      name="summary" rows="2">{{ old('summary', $product->summary) }}</textarea>
+                            @error('summary') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {{-- description --}}
+                    <div class="flex flex-row items-start gap-4">
+                        <div class="basis-1/5 pt-2"><strong>รายละเอียด :</strong></div>
+                        <div class="basis-4/5">
+                            <textarea class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
+                                      name="description" rows="5">{{ old('description', $product->description) }}</textarea>
+                            @error('description') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    {{-- ราคา --}}
+                    <div class="pt-2 border-t">
+                        <h3 class="font-bold text-gray-800 mt-4">ราคา</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <strong>ราคาขาย :</strong>
                             <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
@@ -167,11 +143,11 @@
                         </div>
 
                         <div>
-                            <strong>ราคาก่อนลด :</strong>
+                            <strong>ราคาเทียบ :</strong>
                             <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="compare_at_price" type="number" step="0.01"
-                                   value="{{ old('compare_at_price', $product->compare_at_price) }}">
-                            @error('compare_at_price') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
+                                   name="compare_price" type="number" step="0.01"
+                                   value="{{ old('compare_price', $product->compare_price) }}">
+                            @error('compare_price') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
                         </div>
 
                         <div>
@@ -180,37 +156,11 @@
                                    name="cost" type="number" step="0.01" value="{{ old('cost', $product->cost) }}">
                             @error('cost') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
                         </div>
-
-                        <div>
-                            <strong>อัตราภาษี (%) :</strong>
-                            <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="tax_rate" type="number" step="0.01" value="{{ old('tax_rate', $product->tax_rate) }}">
-                            @error('tax_rate') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div>
-                            <strong>ประเภทส่วนลด :</strong>
-                            <select name="discount_type" class="mt-1 w-full py-2 px-3 bg-blue-50 border border-amber-100 rounded">
-                                <option value="none" @selected($discountType === 'none')>ไม่ลด</option>
-                                <option value="percent" @selected($discountType === 'percent')>เปอร์เซ็นต์ (%)</option>
-                                <option value="fixed" @selected($discountType === 'fixed')>ลดเป็นจำนวนเงิน</option>
-                            </select>
-                            @error('discount_type') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div>
-                            <strong>มูลค่าส่วนลด :</strong>
-                            <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="discount_value" type="number" step="0.01"
-                                   value="{{ old('discount_value', $product->discount_value) }}">
-                            @error('discount_value') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                            <div class="mt-1 text-xs text-gray-500">* ถ้าเป็น percent ให้ใส่ 10 = ลด 10%</div>
-                        </div>
                     </div>
 
-                    {{-- สต๊อก/คลัง --}}
+                    {{-- สต๊อก --}}
                     <div class="pt-2 border-t">
-                        <h3 class="font-bold text-gray-800 mt-4">สต๊อก / คลัง</h3>
+                        <h3 class="font-bold text-gray-800 mt-4">สต๊อก</h3>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -220,101 +170,35 @@
                                    name="stock_qty" type="number" value="{{ old('stock_qty', $product->stock_qty) }}">
                             @error('stock_qty') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
                         </div>
-
-                        <div>
-                            <strong>จองแล้ว :</strong>
-                            <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="reserved_qty" type="number" value="{{ old('reserved_qty', $product->reserved_qty) }}">
-                            @error('reserved_qty') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div>
-                            <strong>จุดเตือนสั่งซื้อ (reorder) :</strong>
-                            <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="reorder_point" type="number" value="{{ old('reorder_point', $product->reorder_point) }}">
-                            @error('reorder_point') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div>
-                            <strong>สถานะสต๊อก :</strong>
-                            <select name="stock_status" class="mt-1 w-full py-2 px-3 bg-blue-50 border border-amber-100 rounded">
-                                <option value="in_stock" @selected($stockStatus === 'in_stock')>มีสินค้า</option>
-                                <option value="out_of_stock" @selected($stockStatus === 'out_of_stock')>สินค้าหมด</option>
-                                <option value="preorder" @selected($stockStatus === 'preorder')>พรีออเดอร์</option>
-                            </select>
-                            @error('stock_status') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
                     </div>
 
-                    {{-- ขนส่ง/มิติ --}}
-                    <div class="pt-2 border-t">
-                        <h3 class="font-bold text-gray-800 mt-4">ขนส่ง / มิติ</h3>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <strong>น้ำหนัก (kg) :</strong>
-                            <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="weight_kg" type="number" step="0.001" value="{{ old('weight_kg', $product->weight_kg) }}">
-                            @error('weight_kg') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div>
-                            <strong>ยาว (cm) :</strong>
-                            <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="length_cm" type="number" step="0.01" value="{{ old('length_cm', $product->length_cm) }}">
-                            @error('length_cm') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div>
-                            <strong>กว้าง (cm) :</strong>
-                            <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="width_cm" type="number" step="0.01" value="{{ old('width_cm', $product->width_cm) }}">
-                            @error('width_cm') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div>
-                            <strong>สูง (cm) :</strong>
-                            <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="height_cm" type="number" step="0.01" value="{{ old('height_cm', $product->height_cm) }}">
-                            @error('height_cm') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <strong>Shipping Class :</strong>
-                            <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="shipping_class" type="text" value="{{ old('shipping_class', $product->shipping_class) }}">
-                            @error('shipping_class') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
-
-                    {{-- รูป/สื่อ --}}
+                    {{-- รูป / สื่อ --}}
                     <div class="pt-2 border-t">
                         <h3 class="font-bold text-gray-800 mt-4">รูป / สื่อ</h3>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <strong>Cover Image URL :</strong>
+                            <strong>Cover Image :</strong>
                             <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="cover_image_url" type="text" value="{{ old('cover_image_url', $product->cover_image_url) }}">
-                            @error('cover_image_url') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
+                                   name="cover_image" type="text" value="{{ old('cover_image', $product->cover_image) }}">
+                            @error('cover_image') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
 
-                            @if($product->cover_image_url)
+                            @if(!empty($product->cover_image))
                                 <div class="mt-2">
-                                    <a href="{{ $product->cover_image_url }}" target="_blank" class="text-blue-600 underline text-sm">
-                                        ดูรูป
+                                    <a href="{{ $product->cover_image }}" target="_blank" class="text-blue-600 underline text-sm">
+                                        ดูรูปปก
                                     </a>
                                 </div>
                             @endif
                         </div>
 
                         <div>
-                            <strong>Gallery Images (คั่นด้วย ,) :</strong>
+                            <strong>Images (คั่นด้วย ,) :</strong>
                             <input class="mt-1 w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                   name="gallery_images" type="text" value="{{ $galleryCsv }}">
-                            @error('gallery_images') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                            <div class="mt-1 text-xs text-gray-500">* ใส่หลาย URL คั่นด้วยเครื่องหมายจุลภาค</div>
+                                   name="images" type="text" value="{{ $imagesCsv }}">
+                            @error('images') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
+                            <div class="mt-1 text-xs text-gray-500">* ใส่หลาย path/URL คั่นด้วยเครื่องหมายจุลภาค</div>
                         </div>
                     </div>
 
@@ -351,65 +235,17 @@
                         @error('is_featured') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
                     </div>
 
-                    {{-- SEO --}}
-                    <div class="pt-2 border-t">
-                        <h3 class="font-bold text-gray-800 mt-4">SEO</h3>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div class="flex flex-row items-center gap-4">
-                            <div class="basis-1/5"><strong>Meta Title :</strong></div>
-                            <div class="basis-4/5">
-                                <input class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                       name="meta_title" type="text" value="{{ old('meta_title', $product->meta_title) }}">
-                                @error('meta_title') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                            </div>
-                        </div>
-
-                        <div class="flex flex-row items-start gap-4">
-                            <div class="basis-1/5 pt-2"><strong>Meta Description :</strong></div>
-                            <div class="basis-4/5">
-                                <textarea class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                          name="meta_description" rows="2">{{ old('meta_description', $product->meta_description) }}</textarea>
-                                @error('meta_description') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                            </div>
-                        </div>
-
-                        <div class="flex flex-row items-start gap-4">
-                            <div class="basis-1/5 pt-2"><strong>Meta Keywords :</strong></div>
-                            <div class="basis-4/5">
-                                <textarea class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                          name="meta_keywords" rows="2">{{ old('meta_keywords', $product->meta_keywords) }}</textarea>
-                                @error('meta_keywords') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- อื่น ๆ --}}
+                    {{-- Notes --}}
                     <div class="pt-2 border-t">
                         <h3 class="font-bold text-gray-800 mt-4">อื่น ๆ</h3>
                     </div>
 
-                    <div class="space-y-4">
-                        <div class="flex flex-row items-start gap-4">
-                            <div class="basis-1/5 pt-2"><strong>Notes :</strong></div>
-                            <div class="basis-4/5">
-                                <textarea class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                          name="notes" rows="2">{{ old('notes', $product->notes) }}</textarea>
-                                @error('notes') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                            </div>
-                        </div>
-
-                        <div class="flex flex-row items-start gap-4">
-                            <div class="basis-1/5 pt-2">
-                                <strong>Attributes (JSON) :</strong>
-                                <div class="text-xs text-gray-500 mt-1">ตัวอย่าง: {"color":"Black","size":"M"}</div>
-                            </div>
-                            <div class="basis-4/5">
-                                <textarea class="w-full py-2 px-3 font-mono text-sm text-gray-700 bg-blue-50 border border-amber-100 rounded"
-                                          name="attributes" rows="6">{{ $attrsJson }}</textarea>
-                                @error('attributes') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
-                            </div>
+                    <div class="flex flex-row items-start gap-4">
+                        <div class="basis-1/5 pt-2"><strong>Notes :</strong></div>
+                        <div class="basis-4/5">
+                            <textarea class="w-full py-2 px-3 text-gray-700 bg-blue-50 border border-amber-100 rounded"
+                                      name="notes" rows="2">{{ old('notes', $product->notes) }}</textarea>
+                            @error('notes') <div class="mt-1 text-red-600 text-sm">{{ $message }}</div> @enderror
                         </div>
                     </div>
 
